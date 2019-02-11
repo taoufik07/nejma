@@ -1,0 +1,12 @@
+*.pyc
+.coverage
+.pytest_cache
+.DS_Store
+coverage.xml
+venv/
+env/
+
+build
+dist/
+nejma.egg-info/
+app.py
