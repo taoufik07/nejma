@@ -1,10 +1,18 @@
 # ⭐ Nejma ⭐
 
 
-Nejma ⭐ allows you to manage multiple realtime connections and send messages to groups or a user multiple tabs...
+Inspired by `channels`, Nejma ⭐ allows you manage and send messages to groups of channels
+
+Things you can build with `nejma`:
+- chat
+- notification
+- handle users connected from multiple tabs)
+- and more...
 
 
-Take a look at this example `nejma-chat`, a simple chat application built using `nejma` and `starlette`.
+## Example
+
+Take a look at this example [`nejma-chat`](https://github.com/taoufik07/nejma-chat), a simple chat application built using `nejma` and `starlette`.
 
 
 ## Installation
@@ -36,27 +44,17 @@ async def on_connect(self, websocket, **kwargs):
 Add groups, channels or send messages   
 
 ```python
-    async def on_receive(self, websocket, data):
-    	# Adds a channel to a giving group
-        self.channel_layer.add(group, self.channel)
+async def on_receive(self, websocket, data):
+    self.channel_layer.add(group, self.channel)
 
-        # Removes a channel from a given group
-        self.channel_layer.remove(group, self.channel)
-
-        # Removes a channel from all the groups
-        self.channel_layer.remove_channel(self.channel)
-
-        # Reset all the groups
-        self.channel_layer.flush()
-
-        await self.channel_layer.group_send(group, "Welcome !")
+    await self.channel_layer.group_send(group, "Welcome !")
 ```
 
 Finnaly, remove the channel once the connection is closed 
 
 ```python
-    async def on_disconnect(self, websocket, close_code):
-        self.channel_layer.remove_channel(self.channel)
+async def on_disconnect(self, websocket, close_code):
+    self.channel_layer.remove_channel(self.channel)
 ```
 
 
@@ -66,7 +64,7 @@ Finnaly, remove the channel once the connection is closed
 To use `nejma` with `starlette`, simply import the WebSocketEndpoint from nejma
 
 ```python
-from channels.ext.starlette import WebSocketEndpoint
+from nejma.ext.starlette import WebSocketEndpoint
 
 @app.websocket_route("/ws")
 class Chat(WebSocketEndpoint):
@@ -94,28 +92,44 @@ class Chat(WebSocketEndpoint):
 
 The `ChannelLayer` class provided by `nejma` exposes the following methods :
 
-`add(group, channel)`
+`add(group, channel, send=None)`
 
 Adds a channel to a giving group.
 
+* send : method to send messages to a channel
+
 ```python
-	self.channel_layer.add(group, self.channel)
+self.channel_layer.add(group, self.channel, send=websocket.send)
+```
+
+`async group_send(group, "Welcome !")`
+
+Sends a message to a group of channels
+
+```python
+await self.channel_layer.group_send(group, "Welcome !")
 ```
 
 `remove(group, channel)`
+
 Removes a channel from a given group
+
 ```python
 self.channel_layer.remove(group, self.channel)
 ```
 
 `remove_channel(channel)`
+
 Removes a channel from all the groups
+
 ```python
 self.channel_layer.remove_channel(self.channel)
 ```
 
 `flush()`
+
 Reset all the groups
+
 ```python
 self.channel_layer.flush()
 ```
