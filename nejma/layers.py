@@ -1,13 +1,14 @@
-import time
-import uuid
 import re
+import random
+import string
+import time
 
 
 class Channel:
     def __init__(self, name=None, send=None, expires=60):
         if name:
             assert self.validate_name(name), "Invalid channel name"
-        self.name = name or str(uuid.uuid4())
+        self.name = name or "".join(random.choices(string.ascii_letters, k=12))
         self.expires = expires
         self.created_at = time.time()
         self._send = send
