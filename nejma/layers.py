@@ -27,6 +27,9 @@ class Channel:
     def is_expired(self):
         return self.expires + int(self.created_at) < time.time()
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__} name="{self.name}">'
+
 
 class ChannelLayer:
     def __init__(self, expires=36000, capacity=100):
