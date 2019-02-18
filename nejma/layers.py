@@ -9,6 +9,7 @@ class Channel:
             assert self.validate_name(name), "Invalid channel name"
         self.name = name or str(uuid.uuid4())
         self.expires = expires
+        self.created_at = time.time()
         self._send = send
 
     async def send(self, message):
@@ -22,9 +23,12 @@ class Channel:
             + "only alphanumerics and underscores are accepted"
         )
 
+    def is_expired(self):
+        return self.expires + int(self.created_at) < time.time()
+
 
 class ChannelLayer:
-    def __init__(self, expires=60, capacity=100):
+    def __init__(self, expires=36000, capacity=100):
         self.capacity = capacity
         self.expires = expires
 
@@ -48,6 +52,7 @@ class ChannelLayer:
         self.groups = {}
 
     async def group_send(self, group, payload):
+        self.clean_expired()
         for channel in self.groups.get(group, {}):
             await channel.send(payload)
 
@@ -63,6 +68,13 @@ class ChannelLayer:
             "Group names must be valid python identifier"
             + "only alphanumerics and underscores are accepted"
         )
+
+    def clean_expired(self):
+        for group in self.groups:
+            # Can't change dict size during iteration
+            for channel in list(self.groups.get(group, {})):
+                if channel.is_expired():
+                    del self.groups[group][channel]
 
 
 channel_layer = ChannelLayer()
