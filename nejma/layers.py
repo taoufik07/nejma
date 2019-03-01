@@ -1,4 +1,4 @@
-import re
+import asyncio
 import random
 import string
 import time
@@ -12,9 +12,19 @@ class Channel:
         self.expires = expires
         self.created_at = time.time()
         self._send = send
+        self.queue = None
 
     async def send(self, message):
-        await self._send(message)
+        if self.queue is None:
+            self.queue = asyncio.Queue()
+
+        await self.queue.put(message)
+
+    async def receive(self):
+        if self.queue is None:
+            self.queue = asyncio.Queue()
+
+        return await self.queue.get()
 
     def validate_name(self, name):
         if name.isidentifier():
@@ -79,6 +89,18 @@ class ChannelLayer:
             for channel in list(self.groups.get(group, {})):
                 if channel.is_expired():
                     del self.groups[group][channel]
+
+    async def dispatch(self, message):
+        handler = getattr(self, self.get_handler_name(message), None)
+        if handler:
+            await handler(message)
+        else:
+            raise ValueError(f"No handler for type {message['type']}")
+
+    def get_handler_name(self, message):
+        if "type" not in message:
+            raise ValueError("'type' attribute is not defined")
+        return message["type"].replace(".", "_")
 
 
 channel_layer = ChannelLayer()
