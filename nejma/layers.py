@@ -5,13 +5,12 @@ import time
 
 
 class Channel:
-    def __init__(self, name=None, send=None, expires=60):
+    def __init__(self, name=None, expires=60):
         if name:
             assert self.validate_name(name), "Invalid channel name"
         self.name = name or "".join(random.choices(string.ascii_letters, k=12))
         self.expires = expires
         self.created_at = time.time()
-        self._send = send
         self.queue = None
 
     async def send(self, message):
@@ -48,10 +47,10 @@ class ChannelLayer:
 
         self.groups = {}
 
-    def add(self, group_name, channel, send=None):
+    def add(self, group_name, channel):
         assert self.validate_name(group_name), "Invalid group name"
         if isinstance(channel, (str, bytes)):
-            channel = Channel(name=channel, send=send)
+            channel = Channel(name=channel)
 
         self.groups.setdefault(group_name, {})
         # lookup

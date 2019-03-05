@@ -17,18 +17,7 @@ class WebSocketEndpoint(BaseWebSocketEndpoint):
 
         self.channel_layer = channel_layer
 
-        if self.encoding == "json":
-            send_ = websocket.send_json
-        elif self.encoding == "text":
-            send_ = websocket.send_text
-        elif self.encoding == "bytes":
-            send_ = websocket.send_bytes
-        else:
-            send_ = websocket.send
-
-        self.send = send_
-
-        self.channel = Channel(send=send_)
+        self.channel = Channel()
 
         loop = asyncio.get_event_loop()
 
@@ -54,7 +43,7 @@ class WebSocketEndpoint(BaseWebSocketEndpoint):
                             cont = False
                             break
                         else:
-                            await self.dispatch(message)
+                            await self.dispatch(websocket, message)
                         tasks[i] = asyncio.ensure_future(callables[i]())
         except Exception as exc:
             close_code = status.WS_1011_INTERNAL_ERROR
@@ -68,12 +57,12 @@ class WebSocketEndpoint(BaseWebSocketEndpoint):
                     pass
             await self.on_disconnect(websocket, close_code)
 
-    async def dispatch(self, message):
+    async def dispatch(self, websocket, message):
         assert "type" in message
         handler = getattr(self, message["type"].replace(".", "_"), None)
         if not handler:
             raise ValueError(f"'{message['type']}' is not defined")
-        await handler(message)
+        await handler(websocket, message)
 
     async def on_connect(self, websocket, **kwargs):
         await super().on_connect(websocket, **kwargs)
